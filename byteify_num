@@ -1,0 +1,27 @@
+#!/usr/bin/awk -f
+
+BEGIN{
+	
+	logmul = 1 / log(1024)
+	mul = 1/1024
+	pref[0] = "B"
+	pref[1] = "K"
+	pref[2] = "M"
+	pref[3] = "G"
+	pref[4] = "T"
+}
+
+{
+	p = int(log($1) * logmul)
+
+	if(p > 4) 
+		p=4
+	else if(p < 0)	
+		p=0
+
+	n = $1 * mul ^ p;
+
+	$1 = sprintf("%8.1f%s", n, pref[p]);
+
+	print
+}

@@ -1,0 +1,23 @@
+#!/bin/awk -f
+BEGIN{
+	if(ARGC < 2)
+	{
+		print "Error: Specify a multiplier" > "/dev/stderr"
+		exit(1)
+	}
+
+	mul=ARGV[1]
+	
+	#Shift
+	for(i=1; i< ARGC-1; i++)
+		ARGV[i] = ARGV[i+1]
+	
+	ARGC--
+}
+
+{
+	for(i=1; i <= NF; i++)
+		$i=$i * mul
+
+	print
+}

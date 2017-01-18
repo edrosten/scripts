@@ -1,0 +1,41 @@
+#!/bin/bash
+
+text="`xgetsel -n`"
+
+
+if [ "$text" = "" ]
+then
+	xmessage -buttons dismiss "Nothing to look up." 
+	exit 
+fi
+
+tf="${TMP:-/tmp}/man-selection.$$$RANDOM$RANDOM$RANDOM$RANDOM.tmp"
+
+
+xmessage -buttons "" "Attempting to format page" &
+xmp=$!
+
+man "$text" 2>&1  > "$tf"
+
+a=$?
+
+kill $xmp
+
+rm -f "$tf"
+
+if [ $a = 0 ] && ! head -n1 "$tf" | grep -q "No" 
+then
+	xt -e man "$text" &
+else
+	{
+		xmessage -buttons dismiss \
+"error running: man $text
+man failed with exit code $a:
+$(cat $tf)
+"
+		rm -f $tf
+	}
+fi
+
+
+

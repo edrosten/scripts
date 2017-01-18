@@ -1,0 +1,110 @@
+#!/bin/bash
+trap "exit 0" SIGPIPE
+
+n="${0##*/}"
+usage="$n: usage: $n -ppm|-pgm|-pbm|-h"
+t=
+
+function eecho 
+{
+	echo "$*" 1>&2
+}
+
+function file
+{
+	cat <( echo -n $input_magic ) - 
+}
+
+
+while [ "$1" != "" ]
+do
+	case "$1" in 
+		"-ppm")
+			t=ppm
+			;;
+		"-pgm")
+			t=pgm
+			;;
+		"-pbm")
+			t=pbm
+			;;
+		"-h")
+cat << FOO
+$usage
+
+Converts an incoming pnm to a pnm of a known type.
+
+Conversion to PPM is done using a greyscale output.
+Conversion from PPM uses CCIR quantization.
+Conversion to PBM uses thresholding at 0.5.
+
+Depths are not changed, except for PBM to PGM conversion which results in a 
+PGM of depth 255.
+
+FOO
+			exit
+			;;
+		*)
+			echo "$n: bad argument: \"$1\"" 1>&2
+			echo "$usage" 1>&2
+			exit 1
+	esac
+
+	shift
+done
+
+if [ "x$t" == "x" ]
+then
+	echo "$n: incorrect arguments." 1>&2
+	echo "$usage" 1>&2
+	exit 1
+fi
+
+#Get input type (2 bytes)
+input_magic=$(dd bs=2 count=1 2> /dev/null )
+
+
+if ! echo "$input_magic" | grep -q "P[123456]"
+then
+	eecho "$n: error: Input is not a pnm file."
+	exit 1
+fi
+
+#Parse magic number
+case ${input_magic:1:1} in
+	1|4)
+		in=pbm
+		;;
+	2|5)	
+		in=pgm
+		;;
+	3|6)	
+		in=ppm
+		;;
+esac
+
+
+if [ $in == $t ]
+then
+	file
+elif [ $t == ppm ]
+then
+	file | pgmtoppm '#ffffff'
+elif [ $t == pgm ] 
+then 
+	if [ $in == ppm ]
+	then
+		file | ppmtopgm
+	else
+		file | pnmdepth 255
+	fi
+else #ppm
+	if [ $in == ppm ]
+	then
+		#Bork in netpbm. This pgm* should automatically convert the
+		#input in to a pgm
+		file | ppmtopgm | pgmtopbm -threshold -value 0.5
+	else
+		file | pgmtopbm -threshold -value 0.5
+	fi
+fi

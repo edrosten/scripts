@@ -1,0 +1,9 @@
+#!/usr/bin/awk -f 
+{
+	sx += $1
+	sxx += $1*$1
+}
+
+END{
+	print sqrt(sxx/NR - (sx/NR)^2)
+}

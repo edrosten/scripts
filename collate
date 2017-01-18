@@ -1,0 +1,54 @@
+#!/bin/bash
+trap "exit 0" SIGPIPE
+prog="`basename $0`"
+
+usage="\
+Usage:
+
+$prog file1 file2  [file3 [file4 [... ] ] ] 
+
+Outputs a file who's rows consists of the concatenated rows of the input files.
+"
+
+if [ $# -lt 2 ]
+then
+	echo "$prog: error: incorrect arguments"
+	echo "$usage"
+	exit 1
+fi
+
+#wtfbbq?! ha! allows ' ' in filename (ok, so not '\n')
+while [ $# != 0 ]
+do
+	echo "$1"
+	shift
+done | awk '
+
+{
+	file[NR] = $0
+	if(file[NR] == "-")
+		file[NR] = "/dev/stdin"
+}
+
+END{
+	
+	while(1)
+	{
+		line = ""
+		good=1
+	
+		for(i=1; i <= NR; i++)
+		{
+			good = good && (getline l < file[i])
+			line = line " " l
+		}
+
+		if(!good)
+			break
+		
+		print line
+	}
+}'
+
+
+

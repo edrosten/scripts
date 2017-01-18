@@ -1,0 +1,135 @@
+#!/bin/bash
+trap "exit 0" SIGPIPE
+
+n="${0##*/}"
+usage="$n: usage: $n function [-limit] [-seed N] [-pos]
+
+-limit       automatically limit p to 0 <= 0  <= 1
+-seed        seed for random number generator
+-pos         track x, y position 
+
+function must take the form of one or more awk rules, and must modify p.
+
+Variables:
+
+\$1           pixel value
+p            normalized pixel value
+max          maxval
+pi           numerical value for pi
+rows         number of rows
+cols         number of cols
+x            xpos (only with -pos) 0 <= x < cols
+y            ypos (only with -pos) 0 <= y < rows
+
+Functinons:
+lim(x, min, max)       limit x
+grand()                Gaussian random numbers.
+"
+
+if [ "$1" == "" ]
+then
+	echo "$n: error: incorrect args." 1>&2
+	echo "$usage" 1>&2
+	exit 1
+fi
+func="$1"
+shift
+
+output_nolim="print int(max*(p))"
+output_limit="print int(max*(p<0?0:(p>1?1:p)))"
+output="$output_nolim"
+
+pos=
+pos_follow="++xx >= colz { xx=0; y++}
+ppm{x = int(xx/3)}
+!ppm{xx = x}
+"
+
+
+rand_seed=
+
+while [ "$1" != "" ]
+do
+	case "$1" in
+		"-limit")
+			output="$output_limit"
+			;;
+
+		"-seed")
+			rand_seed="$2"
+			shift
+			;;
+
+		"-pos")
+			pos="$pos_follow"
+			;;
+
+		*)
+			echo "$n: error: bad arg: \"$1\"." 1>&2
+			echo "$usage" 1>&2
+			exit 1
+			;;
+	esac
+	shift
+done
+
+pnmtoTpnm -col | mawk '
+function lim(x, min, max)
+{
+	return x<min?min:(x>max?max:x)
+}
+
+function grand(      x1, x2, w, y1)
+{
+	if(!grand_use_old)
+	{
+		do 
+		{
+			x1 = 2 * rand() - 1.0;
+			x2 = 2 * rand() - 1.0;
+			w = x1 * x1 + x2 * x2;
+		} while ( w >= 1 );
+
+		w = sqrt( (-2 * log(w))/w);
+		y1 = x1 * w;
+		grand_y2 = x2 * w;
+
+		grand_use_old=1
+		return y1;
+	}
+	else
+	{
+		grand_use_old=0
+		return grand_y2
+	}
+
+}
+
+BEGIN{
+	getline 
+	max=$4
+	colz = cols = $2
+	rows = $3
+	ppm=0
+	
+	if($1 == "P3")
+	{
+		colz *= 3;
+		ppm=1
+	}
+	
+	pi=atan2(1, 1)*4
+	print $0
+	srand('"$rand_seed"')
+}
+'"$pos"'
+
+{
+	p = $1/max
+}
+
+'"$func"'
+	
+{
+	'"$output"'
+}'

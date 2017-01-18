@@ -1,0 +1,11 @@
+#!/bin/awk -f
+BEGIN{
+	max=-1e99
+}
+
+
+$1 > max{max=$1}
+
+END{
+	print max
+}

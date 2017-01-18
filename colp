@@ -1,0 +1,28 @@
+#!/bin/bash
+trap "exit 0" SIGPIPE
+prog="`basename $0`"
+
+usage="\
+Usage:
+
+$prog column_predicate [file1 [... ] ] ] 
+
+Print certain columns based on predicate. Of the form:
+'c==1 || c%5 ...'
+"
+
+if [ $# -lt 1 ]
+then
+	echo "$prog: error: incorrect arguments"
+	echo "$usage"
+	exit 1
+fi
+p="$1"
+shift
+
+awk '
+{
+	for(c=1; c <= NF; c++)
+		if(!('"$p"'))
+			$c=""
+}1' "$@"

@@ -1,0 +1,28 @@
+#!/bin/bash
+trap "exit 0" SIGPIPE
+prog="`basename $0`"
+
+usage="\
+Usage:
+
+$prog [file1 [file2 [... ] ] ] 
+
+Outputs a file who's rows consists of the concatenated rows of the input files.
+"
+
+if [ "$1" == -h ]
+then
+	echo "$usage"
+	exit 1
+fi
+
+awk '
+NF>0{
+	
+	best_so_far = $1+0;
+
+	for(i=2; i <= NF; i++)
+		if($i > best_so_far)
+			best_so_far = $i
+	print best_so_far
+}' "$@"

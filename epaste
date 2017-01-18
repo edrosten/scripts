@@ -1,0 +1,35 @@
+#!/bin/gawk -f
+BEGIN{
+	for(i=1; i <= ARGC; i++)
+		if(ARGV[i] == "-")
+			ARGV[i] = "/dev/stdin"
+
+	if(ARGC == 1)
+	{
+		ARGC = 2
+		ARGV[1] = "/dev/stdin"
+	}
+	
+	while(1)
+	{
+		line = ""
+		good = 1
+
+
+		for(i=1; i < ARGC; i++)
+		{
+			good = good && (getline l < ARGV[i])
+
+			if(line == "")
+				line = l
+			else
+				line = line "	" l
+
+		}
+		if(!good)
+			break
+		
+		print line
+	}
+
+}

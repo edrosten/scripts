@@ -1,0 +1,23 @@
+#!/bin/bash
+trap "exit 0" SIGPIPE
+prog="`basename $0`"
+
+usage="\
+Usage:
+
+$prog [file1 [file2 [... ] ] ] 
+
+Make the input positive monotonic.
+"
+
+if [ "$1" == -h ]
+then
+	echo "$usage"
+	exit 1
+fi
+
+awk '
+NR==1{n=$1}
+n<$1{n=$1}
+{print n}
+' "$@"

@@ -1,0 +1,80 @@
+#!/usr/bin/env gawk -f
+BEGIN{
+
+	helpstr=\
+"hist [-p] nbins [file]\n\
+\n\
+Computes a histogram of the incoming data, with the    \n\
+specified number of bins uniformly distributed between \n\
+the maximum and minimum data value.                    \n\
+\n\
+-p Produce a PDF (histogram integrates to 1)           \n"
+
+    stderr="/dev/stderr"
+
+	#Process command line arguments
+	if(ARGC==1)
+	{
+		print "Error: incorrect arguments" > stderr
+		print helpstr > stderr
+		exit 1
+	}
+
+	ac=1
+	if(ARGV[ac] == "-p")
+	{
+		pdf=1
+		ac++
+	}
+
+	if(ARGV[ac] ~ /[^0-9]/)
+	{
+		print "Error: incorrect arguments " > stderr
+		print helpstr > stderr
+		exit 1
+	}
+	else
+		nbins=ARGV[ac]+0
+	
+	ARGIND=ac+1
+
+	for(i=ac+1; i < ARGC; i++)
+		av[i]=ARGV[i]
+
+	delete ARGV;
+	for(i in av)
+		ARGV[i] = av[i]
+
+}
+
+
+NR==1{ 
+	min = $n
+	max = $n
+}
+
+
+$n < min { min = $n }
+$n > max { max = $n }
+
+{
+	data[NR] = $n
+}
+
+END{
+	for(i in data)
+		bins[int(nbins * (data[i]-min)/(max - min))]+=1
+
+	if(pdf)
+	{
+		bw = (max - min) / nbins;
+
+		d= NR*bw;
+	}
+	else
+		d=1
+
+	for(i=0; i < nbins; i++)
+		print i*(max-min)/nbins+min, (bins[int(i)]+0)/d
+}
+

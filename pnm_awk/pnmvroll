@@ -1,0 +1,33 @@
+#!/bin/bash
+trap "exit 0" SIGPIPE
+
+n="${0##*/}"
+
+if [ "$1" == "" ]
+then
+	echo "$n: error: incorrect args."
+	echo "$n: usage: $n vertical_shift [file_name]"
+	exit 1
+fi
+
+pnmtoTpnm -row -- "${2:--}" | mawk -vn="$1" '
+BEGIN{
+	getline
+
+	print $0
+	h = $3
+
+	if(n < 0)
+		n = h+n
+}
+
+{
+	row[NR]=$0
+}
+
+END{
+
+	for(i=0; i < h; i++)
+		print row[2+(i+n)%h]
+}
+'

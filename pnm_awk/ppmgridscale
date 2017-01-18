@@ -1,0 +1,78 @@
+#!/bin/bash
+trap "exit 0" SIGPIPE
+n="${0##*/}"
+
+r=1
+g=0
+b=0
+
+
+if [ "$1" == "" ]
+then
+	echo "$n: error: incorrect args."
+	echo "$n: usage: $n scale"
+	exit 1
+fi
+scale="$1"
+shift
+
+while [ "$1" != "" ]
+do
+	case "$1" in
+		"-colour")
+			r=$(echo $2	| awk '{print $1<=0?0:($1>1?1:$1)}')
+			g=$(echo $3	| awk '{print $1<=0?0:($1>1?1:$1)}')
+			b=$(echo $4	| awk '{print $1<=0?0:($1>1?1:$1)}')
+			shift 
+			shift
+			shift
+			;;
+
+		*)
+			echo "$n: error: incorrect args."
+			echo "$n: usage: $n scale"
+			exit 1
+			;;
+	esac
+	shift
+done
+
+
+
+
+pnmformat -ppm | pnmtoTpnm | mawk '
+BEGIN{
+	getline
+	xs = $2
+	ys = $3
+	nc = $4
+	sc = '$scale'
+
+	print "P3", xs*sc, ys*sc, nc
+	x=0
+
+	R = int(nc*'$r')
+	G = int(nc*'$g')
+	B = int(nc*'$b')
+}
+
+{ 
+	r[x]=$1
+	g[x]=$2
+	b[x]=$3
+	x++
+}
+
+x == xs{
+	for(yy=0; yy < sc ; yy++)
+		for(x=0; x < xs ; x++)
+			for(xx=0; xx < sc; xx++)
+				if(xx && yy)
+					print r[x]+0, g[x]+0, b[x]+0
+				else
+					print R, G, B
+	x=0
+}'
+
+
+

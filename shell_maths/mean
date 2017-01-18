@@ -1,0 +1,8 @@
+#!/usr/bin/awk -f 
+{
+	sx += $1
+}
+
+END{
+	print sx / NR;
+}

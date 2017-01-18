@@ -1,0 +1,35 @@
+#!/bin/bash
+trap "exit 0" SIGPIPE
+
+n="${0##*/}"
+
+if [ "$1" == "" ]
+then
+	echo "$n: error: incorrect args."
+	echo "$n: usage: $n horizontal_shift [--] [file_name]"
+	exit 1
+fi
+
+pnmtoTpnm -row -- "${2:--}" | mawk -vn="$1" '
+BEGIN{
+	getline
+
+	print $0
+	w = $2
+
+	if(n < 0)
+		n = w+n
+
+	if($1 == "P3") 
+	{
+		n *= 3
+		w *= 3
+	}
+
+}
+
+{
+	for(i=1; i <= w; i++)
+		print $(1 + (i-1+n)%w)
+}
+'

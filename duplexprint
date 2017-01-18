@@ -1,0 +1,8 @@
+#!/bin/bash
+cat <<FOO
+%!PS-Adobe-3.0 
+statusdict /setduplexmode known {         
+	statusdict begin true setduplexmode end 
+} if
+FOO
+cat "$@"
