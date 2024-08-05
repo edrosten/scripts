@@ -11,7 +11,6 @@ foreground=0
 tmpfile="/tmp/plot-stdin-$USER-$$-$RANDOM$RANDOM.pipe"
 tmpps="/tmp/plot-output-$USER-$$-$RANDOM$RANDOM"
 
-terminal="set terminal x11"
 
 prog="$(basename $0)"
 xr="[*:*]"
@@ -34,6 +33,11 @@ do
 	case "$1" in 
 		-com)
 			output_command_only=1
+			;;
+		-png)
+			[ "x$terminal" != x ] && echo "Warning: $1 overrides specified terminal type." 1>&2
+			terminal="set terminal png"
+			foreground=1
 			;;
 		-psc)
 			[ "x$terminal" != x ] && echo "Warning: $1 overrides specified terminal type." 1>&2
@@ -264,7 +268,10 @@ FOO
 
 done
 
-
+if [[ $terminal == "" ]]
+then
+	terminal="set terminal x11"
+fi
 
 if [ $fatal == 1 ]
 then
